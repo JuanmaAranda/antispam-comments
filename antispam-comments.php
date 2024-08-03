@@ -4,7 +4,8 @@ Plugin Name: AntiSpam Comments
 Description: Evita que los comentarios con enlaces o palabras prohibidas sean enviados, oculta el campo "web" del formulario de comentarios y permite personalizar el mensaje de error.
 Version: 1.6
 Author: Juanma Aranda
-URL: https://wpnovatos.com
+Author URI: https://wpnovatos.com/
+License: GPLv2 or later
 */
 
 // Registrar los ajustes del plugin
