@@ -17,13 +17,15 @@ Este plugin para WordPress ayuda a prevenir el spam en los comentarios de tu sit
 - Personalización del título y contenido del mensaje de error.
 - Personalización del mensaje de redirección.
 - Redirección automática a una URL definida por el administrador después de mostrar el mensaje de error.
+- Opción de desactivar todos los comentarios de WordPress.
+- Opción de desactivar los comentarios solo en los Custom Post Type seleccionados.
 
 ## Instalación
 
 1. Descarga el archivo `antispam-comments.php`.
 2. Sube el archivo a la carpeta `/wp-content/plugins/` en tu servidor de WordPress.
 3. Activa el plugin desde el menú 'Plugins' en WordPress.
-4. Ve a 'Comentarios' > 'Ajustes SPAM' para configurar las opciones del plugin.
+4. Ve a 'Ajustess' > 'AntiSpam Comments' para configurar las opciones del plugin.
 
 ## Uso
 
@@ -34,6 +36,8 @@ Este plugin para WordPress ayuda a prevenir el spam en los comentarios de tu sit
 5. **Palabras prohibidas:** Escribe las palabras prohibidas separadas por comas. Los comentarios que contengan estas palabras serán bloqueados.
 6. **Considerar spam los comentarios con links:** Activa esta opción para bloquear automáticamente cualquier comentario que contenga enlaces.
 7. **Ocultar el campo "web":** Activa esta opción para ocultar el campo "web" del formulario de comentarios.
+8. **Desactivar comentarios de WordPress:** Activa esta opción para desactivar los comentarios en todo el sitio.
+9. **Desactivar comentarios en tipos de post personalizados:** Selecciona los Custom Post Type en los que quieres desactivar los comentarios.
 
 ## Contribuciones
 
