@@ -36,7 +36,7 @@ Este plugin para WordPress ayuda a prevenir el spam en los comentarios de tu sit
 5. **Palabras prohibidas:** Escribe las palabras prohibidas separadas por comas. Los comentarios que contengan estas palabras serán bloqueados.
 6. **Considerar spam los comentarios con links:** Activa esta opción para bloquear automáticamente cualquier comentario que contenga enlaces.
 7. **Ocultar el campo "web":** Activa esta opción para ocultar el campo "web" del formulario de comentarios.
-8. **Desactivar comentarios de WordPress:** Activa esta opción para desactivar los comentarios en todo el sitio.
+8. **Desactivar todos los comentarios:** Activa esta opción para desactivar los comentarios en todo el sitio.
 9. **Desactivar comentarios en tipos de post personalizados:** Selecciona los Custom Post Type en los que quieres desactivar los comentarios.
 
 ## Contribuciones
