@@ -35,7 +35,7 @@ function detectar_links_menu() {
 function detectar_links_pagina_ajustes() {
     ?>
     <div class="wrap">
-        <h1>Ajustes del Plugin SPAM</h1>
+        <h1>Ajustes del Plugin AntiSpam Comments</h1>
         <p>Este plugin permite bloquear comentarios que contengan enlaces o palabras prohibidas. Además, puedes personalizar los mensajes de error y la URL de redirección.</p>
         <?php if (isset($_GET['settings-updated'])): ?>
             <div id="message" class="updated notice is-dismissible" style="border-left: 4px solid green;">
