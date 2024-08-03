@@ -1,4 +1,4 @@
-# Detectar Links en Comentarios
+# Detectar SPAM en comentarios
 
 **Plugin Name:** AntiSpam Comments  
 **Description:** Evita que los comentarios con enlaces o palabras prohibidas sean enviados, oculta el campo "web" del formulario de comentarios y permite personalizar el mensaje de error.  
