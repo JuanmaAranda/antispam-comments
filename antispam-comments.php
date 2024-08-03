@@ -2,7 +2,7 @@
 /*
 Plugin Name: AntiSpam Comments
 Description: Evita que los comentarios con enlaces o palabras prohibidas sean enviados, oculta el campo "web" del formulario de comentarios y permite personalizar el mensaje de error.
-Version: 1.6
+Version: 1.7
 Author: Juanma Aranda
 Author URI: https://wpnovatos.com/
 License: GPLv2 or later
@@ -17,26 +17,28 @@ function detectar_links_registrar_ajustes() {
     register_setting('detectar_links_ajustes_grupo', 'detectar_links_mensaje_redireccion');
     register_setting('detectar_links_ajustes_grupo', 'detectar_links_considerar_links_spam');
     register_setting('detectar_links_ajustes_grupo', 'detectar_links_ocultar_campo_web');
+    register_setting('detectar_links_ajustes_grupo', 'detectar_links_desactivar_comentarios');
+    register_setting('detectar_links_ajustes_grupo', 'detectar_links_post_types_desactivar_comentarios');
 }
 
 // Añadir la página de ajustes al menú de administración
 function detectar_links_menu() {
-    add_submenu_page(
-        'edit-comments.php',
-        'Ajustes SPAM',
-        'Ajustes SPAM',
-        'manage_options',
-        'detectar-links-ajustes',
-        'detectar_links_pagina_ajustes'
+    add_options_page(
+        'AntiSpam Comments', // Título de la página de ajustes
+        'AntiSpam Comments', // Título del menú
+        'manage_options', // Capacidad requerida
+        'detectar-links-ajustes', // Slug del menú
+        'detectar_links_pagina_ajustes' // Función que muestra la página de ajustes
     );
 }
 
 // Contenido de la página de ajustes
 function detectar_links_pagina_ajustes() {
+    $custom_post_types = get_post_types(array('public' => true), 'objects');
     ?>
     <div class="wrap">
         <h1>Ajustes del Plugin AntiSpam Comments</h1>
-        <p>Este plugin permite bloquear comentarios que contengan enlaces o palabras prohibidas. Además, puedes personalizar los mensajes de error y la URL de redirección.</p>
+        <p>Este plugin permite bloquear comentarios que contengan enlaces o palabras prohibidas. Además, puedes personalizar los mensajes de error, la URL de redirección, y desactivar los comentarios.</p>
         <?php if (isset($_GET['settings-updated'])): ?>
             <div id="message" class="updated notice is-dismissible" style="border-left: 4px solid green;">
                 <p><strong>Cambios guardados. Las restricciones serán aplicadas a partir de este momento.</strong></p>
@@ -74,6 +76,21 @@ function detectar_links_pagina_ajustes() {
                     <th scope="row">Ocultar el campo "web" del formulario de comentarios</th>
                     <td><input type="checkbox" name="detectar_links_ocultar_campo_web" value="1" <?php checked(1, get_option('detectar_links_ocultar_campo_web'), true); ?> /></td>
                 </tr>
+                <tr valign="top">
+                    <th scope="row">Desactivar todos los comentarios</th>
+                    <td><input type="checkbox" name="detectar_links_desactivar_comentarios" value="1" <?php checked(1, get_option('detectar_links_desactivar_comentarios'), true); ?> /></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">Desactivar comentarios en tipos de post personalizados</th>
+                    <td>
+                        <?php foreach ($custom_post_types as $post_type): ?>
+                            <label>
+                                <input type="checkbox" name="detectar_links_post_types_desactivar_comentarios[<?php echo $post_type->name; ?>]" value="1" <?php checked(1, get_option("detectar_links_post_types_desactivar_comentarios")[$post_type->name] ?? 0, true); ?> />
+                                <?php echo $post_type->labels->name; ?>
+                            </label><br />
+                        <?php endforeach; ?>
+                    </td>
+                </tr>
             </table>
             <?php submit_button(); ?>
         </form>
@@ -105,7 +122,7 @@ function detectar_links_en_comentarios($commentdata) {
             </script>
         </div>';
 
-        wp_die($mensaje, $titulo_error, array('response' => 200));
+        wp_die($mensaje, $titulo_error, array('response' => 200, 'back_link' => false));
     }
 
     return $commentdata;
@@ -130,10 +147,57 @@ function ocultar_campo_web_en_comentarios($fields) {
     return $fields;
 }
 
-// Añadir filtros y acciones
-add_action('admin_menu', 'detectar_links_menu');
-add_action('admin_init', 'detectar_links_registrar_ajustes');
-add_filter('preprocess_comment', 'detectar_links_en_comentarios');
-add_filter('comment_form_default_fields', 'ocultar_campo_web_en_comentarios');
+// Función para desactivar todos los comentarios
+function desactivar_todos_los_comentarios() {
+    if (get_option('detectar_links_desactivar_comentarios')) {
+        // Desactivar comentarios en el frontend
+        add_filter('comments_open', '__return_false', 20, 2);
+        add_filter('pings_open', '__return_false', 20, 2);
+        
+        // Desactivar comentarios en el backend
+        add_filter('admin_menu', function() {
+            remove_menu_page('edit-comments.php');
+        });
 
+        // Redirigir la solicitud de comentarios a la página principal
+        add_action('admin_init', function() {
+            global $pagenow;
+            if ($pagenow === 'edit-comments.php' || $pagenow === 'comment.php' || $pagenow === 'comment-edit.php') {
+                wp_redirect(admin_url());
+                exit;
+            }
+        });
+
+        // Quitar el widget de comentarios del dashboard
+        add_action('wp_dashboard_setup', function() {
+            remove_meta_box('dashboard_recent_comments', 'dashboard', 'normal');
+        });
+
+        // Quitar soporte para comentarios en los tipos de post
+        add_action('init', function() {
+            remove_post_type_support('post', 'comments');
+            remove_post_type_support('page', 'comments');
+            // Añadir otros tipos de post si es necesario
+        });
+    } else {
+        $post_types = get_option('detectar_links_post_types_desactivar_comentarios');
+        if ($post_types) {
+            add_action('init', function() use ($post_types) {
+                foreach ($post_types as $post_type => $value) {
+                    if ($value) {
+                        remove_post_type_support($post_type, 'comments');
+                    }
+                }
+            });
+        }
+    }
+}
+
+// Añadir filtros y acciones
+add_action('admin_init', 'detectar_links_registrar_ajustes');
+add_action('admin_menu', 'detectar_links_menu');
+add_action('preprocess_comment', 'detectar_links_en_comentarios');
+add_filter('comment_form_default_fields', 'ocultar_campo_web_en_comentarios');
+add_action('init', 'desactivar_todos_los_comentarios');
 ?>
+
