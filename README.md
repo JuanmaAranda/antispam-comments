@@ -20,7 +20,7 @@ Este plugin para WordPress ayuda a prevenir el spam en los comentarios de tu sit
 
 ## Instalación
 
-1. Descarga el archivo `detect-links-comments.php`.
+1. Descarga el archivo `antispam-comments.php`.
 2. Sube el archivo a la carpeta `/wp-content/plugins/` en tu servidor de WordPress.
 3. Activa el plugin desde el menú 'Plugins' en WordPress.
 4. Ve a 'Comentarios' > 'Ajustes SPAM' para configurar las opciones del plugin.
