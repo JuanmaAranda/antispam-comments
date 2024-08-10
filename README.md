@@ -25,7 +25,7 @@ Este plugin para WordPress ayuda a prevenir el spam en los comentarios de tu sit
 1. Descarga el archivo `antispam-comments.php`.
 2. Sube el archivo a la carpeta `/wp-content/plugins/` en tu servidor de WordPress.
 3. Activa el plugin desde el menú 'Plugins' en WordPress.
-4. Ve a 'Ajustess' > 'AntiSpam Comments' para configurar las opciones del plugin.
+4. Ve a 'WPnovatos' > 'AntiSpam Comments' para configurar las opciones del plugin.
 
 ## Uso
 
