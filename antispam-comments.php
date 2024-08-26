@@ -2,7 +2,7 @@
 /*
 Plugin Name: AntiSpam Comments
 Description: Evita que los comentarios con enlaces o palabras prohibidas sean enviados, oculta el campo "web" del formulario de comentarios y permite personalizar el mensaje de error.
-Version: 1.7
+Version: 1.8
 Author: Juanma Aranda
 Author URI: https://wpnovatos.com/
 License: GPLv2 or later
@@ -144,74 +144,74 @@ function detectar_links_pagina_ajustes() {
 function detectar_links_en_comentarios($commentdata) {
     // Verificar el nonce antes de procesar los datos del formulario
     if (!isset($_POST['detectar_links_nonce']) || !wp_verify_nonce($_POST['detectar_links_nonce'], 'detectar_links_guardar_ajustes')) {
-        wp_die('Error: nonce no verificado. Por favor, inténtalo de nuevo.');
+        wp_nonce_field('detectar_links_guardar_ajustes', 'detectar_links_nonce');
     }
 
-    // Obtener los ajustes desde la base de datos
-    $considerar_links_spam = get_option('detectar_links_considerar_links_spam');
-    $palabras_prohibidas = explode(',', get_option('detectar_links_palabras_prohibidas'));
+    $considerar_links_spam = get_option('detectar_links_considerar_links_spam', 0);
+    $palabras_prohibidas = explode(',', get_option('detectar_links_palabras_prohibidas', ''));
+    $comentario_contenido = $commentdata['comment_content'];
 
-    // Detectar enlaces en el comentario si la opción está activada
-    if ($considerar_links_spam && preg_match('/http[s]?:\/\/|www\./i', $commentdata['comment_content'])) {
-        $mensaje_error = get_option('detectar_links_mensaje_error');
-        wp_die($mensaje_error);
+    // Detectar enlaces en el comentario
+    if ($considerar_links_spam && preg_match('/https?:\/\/[^\s]+/', $comentario_contenido)) {
+        wp_die(get_option('detectar_links_mensaje_error', 'Lo sentimos, pero tu comentario parece spam.'));
     }
 
     // Detectar palabras prohibidas en el comentario
-    if (detectar_palabras_prohibidas($commentdata['comment_content'], $palabras_prohibidas)) {
-        $mensaje_error = get_option('detectar_links_mensaje_error');
-        wp_die($mensaje_error);
+    foreach ($palabras_prohibidas as $palabra) {
+        if (stripos($comentario_contenido, trim($palabra)) !== false) {
+            wp_die(get_option('detectar_links_mensaje_error', 'Lo sentimos, pero tu comentario contiene palabras no permitidas.'));
+        }
     }
 
     return $commentdata;
 }
 
-// Función auxiliar para detectar palabras prohibidas en un texto
-function detectar_palabras_prohibidas($comentario, $palabras_prohibidas) {
-    foreach ($palabras_prohibidas as $palabra) {
-        if (stripos($comentario, trim($palabra)) !== false) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Función para ocultar el campo "web" del formulario de comentarios
-function detectar_links_ocultar_campo_web() {
-    if (get_option('detectar_links_ocultar_campo_web')) {
-        echo '<style>#url {display:none;}</style>';
-    }
-}
-
-// Función para desactivar los comentarios en todo el sitio o en tipos de post personalizados
+// Desactivar comentarios si la opción está activada
 function detectar_links_desactivar_comentarios() {
-    if (get_option('detectar_links_desactivar_comentarios')) {
+    $desactivar_comentarios = get_option('detectar_links_desactivar_comentarios', 0);
+
+    if ($desactivar_comentarios) {
+        // Desactivar comentarios en entradas
         add_filter('comments_open', '__return_false', 20, 2);
         add_filter('pings_open', '__return_false', 20, 2);
+        // Eliminar sección de comentarios
+        remove_action('wp_head', 'feed_links_extra', 3);
     }
 
-    $tipos_de_post = get_option('detectar_links_post_types_desactivar_comentarios');
-    if ($tipos_de_post) {
-        foreach ($tipos_de_post as $post_type => $value) {
-            if ($value) {
-                add_filter('comments_open', function($open, $post_id) use ($post_type) {
-                    $post = get_post($post_id);
-                    if ($post->post_type == $post_type) {
-                        return false;
-                    }
-                    return $open;
-                }, 20, 2);
-            }
+    // Desactivar comentarios en tipos de post personalizados seleccionados
+    $post_types = get_option('detectar_links_post_types_desactivar_comentarios', array());
+
+    foreach ($post_types as $post_type => $value) {
+        if ($value) {
+            add_action('init', function() use ($post_type) {
+                remove_post_type_support($post_type, 'comments');
+                remove_post_type_support($post_type, 'trackbacks');
+            });
         }
     }
 }
 
-// Hooks de WordPress para ejecutar las funciones del plugin
-add_action('admin_menu', 'detectar_links_menu');
-add_action('admin_init', 'detectar_links_registrar_ajustes');
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'detectar_links_ajustes_enlace');
-add_filter('preprocess_comment', 'detectar_links_en_comentarios');
-add_action('wp_head', 'detectar_links_ocultar_campo_web');
-add_action('init', 'detectar_links_desactivar_comentarios');
+// Ocultar el campo "web" en el formulario de comentarios si la opción está activada
+function detectar_links_ocultar_campo_web() {
+    $ocultar_campo_web = get_option('detectar_links_ocultar_campo_web', 0);
 
+    if ($ocultar_campo_web) {
+        add_filter('comment_form_default_fields', function($fields) {
+            if (isset($fields['url'])) {
+                unset($fields['url']);
+            }
+            return $fields;
+        });
+    }
+}
+
+// Ejecutar las funciones del plugin
+add_action('admin_init', 'detectar_links_registrar_ajustes');
+add_action('admin_menu', 'detectar_links_menu');
+add_action('preprocess_comment', 'detectar_links_en_comentarios');
+add_action('wp', 'detectar_links_desactivar_comentarios');
+add_action('wp', 'detectar_links_ocultar_campo_web');
+
+// Añadir enlace a la página de ajustes en el listado de plugins
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'detectar_links_ajustes_enlace');
 ?>
